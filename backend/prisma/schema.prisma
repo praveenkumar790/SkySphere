@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN // Platform owner (can see everything - optional for multi-tenant, usually just Org Admin is enough)
+  ORG_ADMIN   // Organization Admin (can manage users, sites, settings)
+  OPERATOR    // Can manage drones, missions
+  VIEWER      // Read-only access
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  joinCode  String?  @unique @map("join_code")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  sites     Site[]
+  drones    Drone[]
+  missions  Mission[]
+
+  @@map("organizations")
+}
+
+model Site {
+  id             String       @id @default(uuid())
+  name           String
+  location       String?      // Description or coordinates
+  organizationId String       @map("organization_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("sites")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  passwordHash   String       @map("password_hash")
+  name           String
+  role           UserRole     @default(VIEWER)
+  organizationId String       @map("organization_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  drones         Drone[]      @relation("CreatedDrones") // Track who created/onboarded the drone
+  missions       Mission[]    @relation("CreatedMissions")
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Drone {
+  id             String       @id @default(uuid())
+  name           String
+  model          String
+  status         String       // 'available', 'in-mission', 'maintenance'
+  batteryLevel   Int          @map("battery_level")
+  currentLat     Float?       @map("current_lat")
+  currentLng     Float?       @map("current_lng")
+  lastSeen       DateTime?    @map("last_seen")
+  organizationId String       @map("organization_id")
+  createdById    String?      @map("created_by_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdBy      User?        @relation("CreatedDrones", fields: [createdById], references: [id])
+  missionExecutions MissionExecution[]
+  
+  @@index([status])
+  @@index([batteryLevel])
+  @@index([organizationId])
+  @@map("drones")
+}
+
+model Mission {
+  id                String       @id @default(uuid())
+  name              String
+  description       String?
+  patternType       String       @map("pattern_type") // 'crosshatch', 'perimeter', 'grid'
+  altitude          Float
+  overlapPercentage Float        @map("overlap_percentage")
+  speed             Float
+  polygonCoordinates Json        @map("polygon_coordinates") // Array of {lat, lng}
+  organizationId    String       @map("organization_id")
+  createdById       String       @map("created_by_id")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  createdBy         User         @relation("CreatedMissions", fields: [createdById], references: [id])
+  waypoints         Waypoint[]
+  missionExecutions MissionExecution[]
+  
+  @@index([patternType])
+  @@index([organizationId])
+  @@map("missions")
+}
+
+model Waypoint {
+  id        String   @id @default(uuid())
+  missionId String   @map("mission_id")
+  latitude  Float
+  longitude Float
+  altitude  Float
+  orderIndex Int      @map("order_index")
+  
+  mission   Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  
+  @@index([missionId])
+  @@map("waypoints")
+}
+
+model MissionExecution {
+  id                  String   @id @default(uuid())
+  missionId           String   @map("mission_id")
+  droneId             String   @map("drone_id")
+  status              String   // 'in-progress', 'paused', 'completed', 'aborted'
+  startedAt           DateTime @default(now()) @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+  progressPercentage  Float    @default(0) @map("progress_percentage")
+  currentWaypointIndex Int     @default(0) @map("current_waypoint_index")
+  
+  mission    Mission       @relation(fields: [missionId], references: [id])
+  drone      Drone         @relation(fields: [droneId], references: [id])
+  telemetry  Telemetry[]
+  report     SurveyReport?
+  
+  @@index([missionId])
+  @@index([droneId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("mission_executions")
+}
+
+model Telemetry {
+  id          String   @id @default(uuid())
+  executionId String   @map("execution_id")
+  latitude    Float
+  longitude   Float
+  altitude    Float
+  batteryLevel Float   @map("battery_level")
+  speed       Float
+  heading     Float
+  timestamp   DateTime @default(now())
+  
+  execution   MissionExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  
+  @@index([executionId])
+  @@index([timestamp])
+  @@map("telemetry")
+}
+
+model SurveyReport {
+  id                String   @id @default(uuid())
+  executionId       String   @unique @map("execution_id")
+  totalDistance     Float    @map("total_distance") // in km
+  totalDuration     Int      @map("total_duration") // in minutes
+  coverageArea      Float    @map("coverage_area") // in km²
+  waypointsCompleted Int     @map("waypoints_completed")
+  maxSpeed          Float    @default(0) @map("max_speed")
+  maxAltitude       Float    @default(0) @map("max_altitude")
+  batteryConsumed   Int      @default(0) @map("battery_consumed")
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  execution         MissionExecution @relation(fields: [executionId], references: [id])
+  
+  @@index([createdAt])
+  @@map("survey_reports")
+}

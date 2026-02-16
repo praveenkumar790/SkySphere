@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "survey_reports" ADD COLUMN     "battery_consumed" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "max_altitude" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "max_speed" DOUBLE PRECISION NOT NULL DEFAULT 0;

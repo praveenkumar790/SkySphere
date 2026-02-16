@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  /* Force dark mode color palette */
+  --background: 0 0% 2%;        /* #050505 */
+  --foreground: 0 0% 98%;
+  
+  --card: 0 0% 4%;
+  --card-foreground: 0 0% 98%;
+ 
+  --popover: 0 0% 4%;
+  --popover-foreground: 0 0% 98%;
+ 
+  --primary: 220 100% 60%;      /* Deep Royal Blue */
+  --primary-foreground: 0 0% 100%;
+ 
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 98%;
+ 
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 60%;
+ 
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 98%;
+ 
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 10%;           /* Dark subtle border */
+  --input: 0 0% 10%;
+  --ring: 220 100% 60%;
+  --radius: 0.5rem;
+
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #050505;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#root {
+  width: 100%;
+}
+
+/* React Datepicker Dark Mode Overrides */
+.react-datepicker {
+  background-color: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  font-family: inherit !important;
+}
+
+.react-datepicker__header {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header,
+.react-datepicker__day-name {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.react-datepicker__day {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: hsl(var(--primary)) !important;
+  color: #000 !important;
+  font-weight: bold !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: rgba(6, 182, 212, 0.3) !important;
+  color: #fff !important;
+}
+
+.react-datepicker__day--disabled {
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Custom Scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 6px; /* "Small not big" - Thinner */
+}
+
+::-webkit-scrollbar-track {
+  background: #050505; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3); /* Subtler default state */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+  width: 10px; /* "Little more width" on interaction? (No, standard doesn't support hover width change well) */
+}
+
